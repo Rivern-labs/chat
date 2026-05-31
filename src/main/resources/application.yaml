@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: chat
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      base-url: https://api.groq.com/openai/v1
+      chat:
+        options:
+          model: openai/gpt-oss-20b
+          temperature: 0.2
+  mongodb:
+    uri: ${MONGO_CONNECTION_URI}
+    database: jolly_chats
+
+server:
+  port: 8085
+  error:
+    include-message: always
+    include-binding-errors: always
