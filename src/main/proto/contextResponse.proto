@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+// Retrieval response types.
+// These messages are stable business contracts, not implementation details.
+package retrieval.v1;
+
+option go_package = "river.com/m/v2/retrieval/v1;retrievalv1";
+option java_multiple_files = true;
+option java_outer_classname = "RetrieveContextResponseProto";
+option java_package = "com.rivern.legalai.retrieval.v1";
+
+// Response contract returned to the Chat Service.
+// Includes structured chunks, structured citations, and an optional prompt-ready
+// context string for direct use in LLM orchestration.
+message RetrieveContextResponse {
+  // Ordered retrieval results for prompt construction.
+  repeated ContextChunk chunks = 1;
+
+  // Structured citation records, suitable for citation explorer or deduped
+  // display in downstream clients.
+  repeated StructuredCitation citations = 2;
+
+  // Optional preformatted context produced by the Retrieval Service.
+  // Chat should treat this as an opaque prompt fragment.
+  optional string prompt_ready_context = 3;
+
+  // Reserved for future response fields such as retrieval diagnostics,
+  // alternate context formats, or research-mode metadata.
+  reserved 4 to 19;
+}
+
+// A single retrieved legal chunk with citation and legal metadata attached.
+message ContextChunk {
+  // Stable identifier for the chunk.
+  string chunk_id = 1;
+
+  // Identifier of the source document.
+  string document_id = 2;
+
+  // Retrieved chunk text to feed into the LLM prompt.
+  string content = 3;
+
+  // Relevance score assigned by retrieval/reranking.
+  double relevance_score = 4;
+
+  // Citation data for this chunk.
+  Citation citation = 5;
+
+  // Legal metadata attached to the chunk.
+  LegalMetadata legal_metadata = 6;
+
+  // Reserved for future chunk-level fields such as source spans,
+  // retrieval explanations, or highlight offsets.
+  reserved 7 to 19;
+}
+
+// Structured citation record for downstream citation explorer and UI rendering.
+message StructuredCitation {
+  // Stable identifier for the citation record.
+  string citation_id = 1;
+
+  // References the originating chunk.
+  string chunk_id = 2;
+
+  // References the source document.
+  string document_id = 3;
+
+  // Canonical citation details.
+  Citation citation = 4;
+
+  reserved 5 to 19;
+}
+
+// Canonical citation data for a legal chunk.
+message Citation {
+  string case_title = 1;
+  string court = 2;
+  int32 year = 3;
+  ParagraphRange paragraph_range = 4;
+  SectionInformation section_information = 5;
+
+  reserved 6 to 19;
+}
+
+// Paragraph span associated with the retrieved content.
+message ParagraphRange {
+  int32 start_paragraph = 1;
+  int32 end_paragraph = 2;
+
+  reserved 3 to 9;
+}
+
+// Section-level citation details.
+message SectionInformation {
+  string section_name = 1;
+  string section_reference = 2;
+  string subsection_reference = 3;
+
+  reserved 4 to 9;
+}
+
+// Legal metadata attached to a retrieved chunk.
+message LegalMetadata {
+  repeated string acts = 1;
+  repeated string articles = 2;
+  repeated string legal_topics = 3;
+  repeated CaseReference cited_cases = 4;
+  BenchInformation bench_information = 5;
+
+  reserved 6 to 19;
+}
+
+// Reference to a case cited in the retrieved legal context.
+message CaseReference {
+  string case_title = 1;
+  string citation = 2;
+  int32 year = 3;
+
+  reserved 4 to 9;
+}
+
+// Bench composition and related court metadata.
+message BenchInformation {
+  repeated string judges = 1;
+  string bench_name = 2;
+
+  reserved 3 to 9;
+}

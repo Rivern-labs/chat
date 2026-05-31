@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+// Retrieval contract for the Chat Service.
+// This file intentionally exposes only business-level retrieval concepts.
+package retrieval.v1;
+
+option go_package = "river.com/m/v2/retrieval/v1;retrievalv1";
+option java_multiple_files = true;
+option java_outer_classname = "RetrieveContextRequestProto";
+option java_package = "com.rivern.legalai.retrieval.v1";
+
+import "contextResponse.proto";
+
+// Business-oriented retrieval API.
+// The Chat Service uses this RPC to obtain all LLM-ready legal context without
+// knowing anything about embeddings, Pinecone, reranking, or chunk storage.
+service RetrievalService {
+  rpc RetrieveContext(RetrieveContextRequest) returns (RetrieveContextResponse);
+}
+
+// Minimal request contract.
+// Keep this intentionally small so retrieval internals remain encapsulated.
+message RetrieveContextRequest {
+  // Natural language legal query from the Chat Service.
+  string query = 1;
+
+  // Reserved for future request-scoped features such as multi-query retrieval,
+  // language hints, tenant context, or research mode.
+  reserved 2 to 19;
+}
