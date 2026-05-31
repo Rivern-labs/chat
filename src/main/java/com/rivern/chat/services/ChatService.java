@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import com.rivern.chat.entity.ChatSession;
 import com.rivern.chat.entity.ChatSession.ChatMessage;
-import com.rivern.chat.repositories.ChatSessionRepoistory;
+import com.rivern.chat.repositories.ChatSessionRepository;
 
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -24,10 +24,10 @@ public class ChatService {
     private ChatClientService chatClientService;
 
     @Autowired
-    private ChatSessionRepoistory chatSessionRepoistory;
+    private ChatSessionRepository chatSessionRepository;
 
     public Flux<String> getStreamingResponse(String userMessage, String chatSessionId) {
-        Optional<ChatSession> session = chatSessionRepoistory.findById(UUID.fromString(chatSessionId));
+        Optional<ChatSession> session = chatSessionRepository.findById(UUID.fromString(chatSessionId));
         if (session.isEmpty()) {
             throw new IllegalArgumentException("Invalid chat session ID");
         }
@@ -38,6 +38,15 @@ public class ChatService {
 
         return chatClientService.getStreamingResponse(messages);
 
+    }
+
+    public ChatSession createChatSession(String userId, String initialQuery) {
+        ChatSession chatSession = new ChatSession();
+        chatSession.setId(UUID.randomUUID());
+        chatSession.setUserId(userId);
+        chatSession.setMessages(List.of(new ChatMessage(ChatSession.Sender.USER, initialQuery)));
+
+        return chatSessionRepository.save(chatSession);
     }
 
     private List<Message> buildTranscriptFromTurns(ChatSession chatSession) {

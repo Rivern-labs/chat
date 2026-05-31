@@ -6,6 +6,6 @@ import com.rivern.chat.entity.ChatSession;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface ChatSessionRepoistory extends MongoRepository<ChatSession, UUID> {
+public interface ChatSessionRepository extends MongoRepository<ChatSession, UUID> {
     ChatSession findById(String sessionId);
 }
