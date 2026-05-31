@@ -12,11 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-enum Sender {
-    USER,
-    ASSISTANT
-};
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -32,6 +27,8 @@ public class ChatSession {
 
     private String caseId;
 
+    private String caseTitle;
+
     private List<ChatMessage> messages;
 
     @Getter
@@ -42,4 +39,9 @@ public class ChatSession {
         private Sender sender;
         private String content;
     }
+
+    public enum Sender {
+        USER,
+        ASSISTANT
+    };
 }
