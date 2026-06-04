@@ -2,12 +2,12 @@ syntax = "proto3";
 
 // Retrieval response types.
 // These messages are stable business contracts, not implementation details.
-package retrieval.v1;
+package proto;
 
-option go_package = "river.com/m/v2/retrieval/v1;retrievalv1";
+option go_package = "river.com/m/v2/grpc/retrieval";
 option java_multiple_files = true;
 option java_outer_classname = "RetrieveContextResponseProto";
-option java_package = "com.rivern.legalai.retrieval.v1";
+option java_package = "com.rivern.chat.grpc";
 
 // Response contract returned to the Chat Service.
 // Includes structured chunks, structured citations, and an optional prompt-ready

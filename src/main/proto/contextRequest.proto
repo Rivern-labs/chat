@@ -2,14 +2,14 @@ syntax = "proto3";
 
 // Retrieval contract for the Chat Service.
 // This file intentionally exposes only business-level retrieval concepts.
-package retrieval.v1;
-
-option go_package = "river.com/m/v2/retrieval/v1;retrievalv1";
-option java_multiple_files = true;
-option java_outer_classname = "RetrieveContextRequestProto";
-option java_package = "com.rivern.legalai.retrieval.v1";
+package proto;
 
 import "contextResponse.proto";
+
+option go_package = "river.com/m/v2/grpc/retrieval";
+option java_multiple_files = true;
+option java_outer_classname = "RetrieveContextRequestProto";
+option java_package = "com.rivern.chat.grpc";
 
 // Business-oriented retrieval API.
 // The Chat Service uses this RPC to obtain all LLM-ready legal context without
