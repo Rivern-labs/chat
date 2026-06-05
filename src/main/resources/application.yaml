@@ -13,6 +13,9 @@ spring:
     uri: ${MONGO_CONNECTION_URI}
     database: jolly_chats
 
+auth:
+  endpoint: ${AUTHSERVICE_ENDPOINT}
+
 server:
   port: 8085
   error:
