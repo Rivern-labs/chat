@@ -50,7 +50,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JWKSet authServiceJwkSet(@Value("${AUTHSERVICE_ENDPOINT}") String authServiceEndpoint) {
+    public JWKSet authServiceJwkSet(@Value("auth.endpoint") String authServiceEndpoint) {
         if (authServiceEndpoint == null || authServiceEndpoint.isBlank()) {
             throw new IllegalStateException("AUTHSERVICE_ENDPOINT must be configured");
         }
