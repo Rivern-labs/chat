@@ -40,7 +40,7 @@ public class ChatService {
 
     }
 
-    public ChatSession createChatSession(String userId, String initialQuery) {
+    public ChatSession createChatSession(String userId, String initialQuery, String contextText) {
         ChatSession chatSession = new ChatSession();
         chatSession.setId(UUID.randomUUID());
         chatSession.setUserId(userId);
