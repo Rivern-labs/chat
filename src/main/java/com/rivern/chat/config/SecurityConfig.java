@@ -1,6 +1,5 @@
 package com.rivern.chat.config;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -8,7 +7,9 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
@@ -103,9 +104,12 @@ public class SecurityConfig {
 
                 validateTimestamps(claimsSet);
 
+                Map<String, Object> claims = new HashMap<>(claimsSet.getClaims());
+                claims.replaceAll((name, value) -> value instanceof Date date ? date.toInstant() : value);
+
                 return Jwt.withTokenValue(token)
                         .headers(headers -> headers.putAll(signedJwt.getHeader().toJSONObject()))
-                        .claims(claims -> claims.putAll(claimsSet.getClaims()))
+                        .claims(claimsBuilder -> claimsBuilder.putAll(claims))
                         .build();
             } catch (JwtException e) {
                 throw e;
