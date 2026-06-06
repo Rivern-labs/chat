@@ -50,12 +50,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JWKSet authServiceJwkSet(@Value("auth.endpoint") String authServiceEndpoint) {
+    public JWKSet authServiceJwkSet(@Value("${auth.endpoint}") String authServiceEndpoint) {
         if (authServiceEndpoint == null || authServiceEndpoint.isBlank()) {
-            throw new IllegalStateException("AUTHSERVICE_ENDPOINT must be configured");
+            throw new IllegalStateException("AUTHSERVICE_ENDPOINT must be configured (e.g. https://auth.example.com)");
         }
 
         try {
+            URI endpointUri = new URI(authServiceEndpoint);
+            if (!"http".equalsIgnoreCase(endpointUri.getScheme())
+                    && !"https".equalsIgnoreCase(endpointUri.getScheme())) {
+                throw new IllegalStateException(
+                        "AUTHSERVICE_ENDPOINT must start with http:// or https://, got: " + authServiceEndpoint);
+            }
+
             URI jwksUri = URI.create(ensureTrailingSlash(authServiceEndpoint)).resolve(".well-known/jwks.json");
 
             HttpRequest request = HttpRequest.newBuilder(jwksUri)
@@ -73,13 +80,10 @@ public class SecurityConfig {
             }
 
             return JWKSet.parse(response.body());
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to fetch JWKS from AuthService", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while fetching JWKS from AuthService", e);
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse JWKS from AuthService", e);
+            throw new IllegalStateException("Failed to load JWKS from AuthService: " + e.getMessage(), e);
         }
     }
 
