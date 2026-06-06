@@ -20,7 +20,7 @@ import lombok.Setter;
 public class ChatSession {
 
     @Id
-    private UUID id;
+    private String id;
 
     @Indexed(unique = true)
     private String userId;
@@ -42,6 +42,13 @@ public class ChatSession {
 
     public enum Sender {
         USER,
-        ASSISTANT
+        ASSISTANT,
+        SYSTEM,
     };
+
+    public ChatSession(UUID id, String userId, List<ChatMessage> messages) {
+        this.id = id.toString();
+        this.userId = userId;
+        this.messages = messages;
+    }
 }
