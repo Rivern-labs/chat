@@ -1,7 +1,6 @@
 package com.rivern.chat.entity;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -46,8 +45,8 @@ public class ChatSession {
         SYSTEM,
     };
 
-    public ChatSession(UUID id, String userId, List<ChatMessage> messages) {
-        this.id = id.toString();
+    public ChatSession(String id, String userId, List<ChatMessage> messages) {
+        this.id = id;
         this.userId = userId;
         this.messages = messages;
     }
