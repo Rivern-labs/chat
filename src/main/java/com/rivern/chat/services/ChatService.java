@@ -37,7 +37,7 @@ public class ChatService {
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     public Flux<String> getStreamingResponse(String userMessage, String chatSessionId) {
-        Optional<ChatSession> session = chatSessionRepository.findById(UUID.fromString(chatSessionId));
+        Optional<ChatSession> session = chatSessionRepository.findById(chatSessionId);
         if (session.isEmpty()) {
             throw new IllegalArgumentException("Invalid chat session ID");
         }
@@ -55,7 +55,7 @@ public class ChatService {
         logger.info("Retrieved context for query '{}': {}", initialQuery, response.getPromptReadyContext());
 
         List<ChatSession.ChatMessage> messages = List.of(new ChatMessage(ChatSession.Sender.USER, initialQuery));
-        UUID sessionId = UUID.randomUUID();
+        String sessionId = UUID.randomUUID().toString();
         ChatSession chatSession = new ChatSession(sessionId, userId, messages);
         return chatSessionRepository.save(chatSession);
     }
