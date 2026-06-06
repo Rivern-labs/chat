@@ -7,10 +7,15 @@ import java.util.UUID;
 
 import com.rivern.chat.entity.ChatSession;
 import com.rivern.chat.entity.ChatSession.ChatMessage;
+import com.rivern.chat.grpc.RetrievalClient;
+import com.rivern.chat.grpc.RetrieveContextResponse;
 import com.rivern.chat.repositories.ChatSessionRepository;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,10 +26,15 @@ import reactor.core.publisher.Flux;
 public class ChatService {
 
     @Autowired
+    private RetrievalClient retrievalClient;
+
+    @Autowired
     private ChatClientService chatClientService;
 
     @Autowired
     private ChatSessionRepository chatSessionRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     public Flux<String> getStreamingResponse(String userMessage, String chatSessionId) {
         Optional<ChatSession> session = chatSessionRepository.findById(UUID.fromString(chatSessionId));
@@ -40,12 +50,13 @@ public class ChatService {
 
     }
 
-    public ChatSession createChatSession(String userId, String initialQuery, String contextText) {
-        ChatSession chatSession = new ChatSession();
-        chatSession.setId(UUID.randomUUID());
-        chatSession.setUserId(userId);
-        chatSession.setMessages(List.of(new ChatMessage(ChatSession.Sender.USER, initialQuery)));
+    public ChatSession createChatSession(String userId, String initialQuery) {
+        RetrieveContextResponse response = retrievalClient.retrieveContext(initialQuery);
+        logger.info("Retrieved context for query '{}': {}", initialQuery, response.getPromptReadyContext());
 
+        List<ChatSession.ChatMessage> messages = List.of(new ChatMessage(ChatSession.Sender.USER, initialQuery));
+        UUID sessionId = UUID.randomUUID();
+        ChatSession chatSession = new ChatSession(sessionId, userId, messages);
         return chatSessionRepository.save(chatSession);
     }
 
@@ -64,6 +75,8 @@ public class ChatService {
                 transcript.add(new UserMessage(cm.getContent()));
             } else if (cm.getSender() == ChatSession.Sender.ASSISTANT) {
                 transcript.add(new AssistantMessage(cm.getContent()));
+            } else if (cm.getSender() == ChatSession.Sender.SYSTEM) {
+                transcript.add(new SystemMessage(cm.getContent()));
             }
         }
         return transcript;
