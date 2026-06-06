@@ -4,8 +4,6 @@ import java.util.Map;
 
 import com.rivern.chat.dto.NewChatSessionRequest;
 import com.rivern.chat.entity.ChatSession;
-import com.rivern.chat.grpc.RetrievalClient;
-import com.rivern.chat.grpc.RetrieveContextResponse;
 import com.rivern.chat.services.ChatService;
 
 import org.springframework.http.HttpStatus;
@@ -23,11 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
 
     private final ChatService chatService;
-    private final RetrievalClient retrievalClient;
 
-    public ChatController(ChatService chatService, RetrievalClient retrievalClient) {
+    public ChatController(ChatService chatService) {
         this.chatService = chatService;
-        this.retrievalClient = retrievalClient;
     }
 
     @PostMapping("/new")
@@ -37,10 +33,7 @@ public class ChatController {
 
         String userId = jwt.getSubject();
 
-        RetrieveContextResponse response = retrievalClient.retrieveContext(request.initialQuery());
-
-        ChatSession session = chatService.createChatSession(userId, request.initialQuery(),
-                response.getPromptReadyContext());
+        ChatSession session = chatService.createChatSession(userId, request.initialQuery());
 
         return ResponseEntity.ok(session.getId().toString());
     }
