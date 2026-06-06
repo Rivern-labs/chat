@@ -21,7 +21,7 @@ public class ChatSession {
     @Id
     private String id;
 
-    @Indexed(unique = true)
+    @Indexed
     private String userId;
 
     private String caseId;
