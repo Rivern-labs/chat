@@ -1,17 +1,19 @@
 package com.rivern.chat.controller;
 
-import com.rivern.chat.dto.ChatRequest;
+import java.util.Map;
+
 import com.rivern.chat.dto.NewChatSessionRequest;
 import com.rivern.chat.entity.ChatSession;
-import com.rivern.chat.grpc.RetrievalServiceGrpc;
-import com.rivern.chat.grpc.RetrieveContextRequest;
+import com.rivern.chat.grpc.RetrievalClient;
 import com.rivern.chat.grpc.RetrieveContextResponse;
 import com.rivern.chat.services.ChatService;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,35 +22,43 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/chat")
 public class ChatController {
 
-    @Autowired
-    private ChatService chatService;
+    private final ChatService chatService;
+    private final RetrievalClient retrievalClient;
 
-    @Autowired
-    private RetrievalServiceGrpc.RetrievalServiceBlockingStub retrievalStub;
+    public ChatController(ChatService chatService, RetrievalClient retrievalClient) {
+        this.chatService = chatService;
+        this.retrievalClient = retrievalClient;
+    }
 
-    @RequestMapping("/new")
-    public ResponseEntity<String> createChatSession(Authentication authentication,
+    @PostMapping("/new")
+    public ResponseEntity<String> createChatSession(
+            @AuthenticationPrincipal Jwt jwt,
             @RequestBody NewChatSessionRequest request) {
 
-        try {
-            Jwt jwt = (Jwt) authentication.getPrincipal();
-            String userId = jwt.getSubject();
+        String userId = jwt.getSubject();
 
-            RetrieveContextRequest contextRequest = RetrieveContextRequest.newBuilder()
-                    .setQuery(request.initialQuery())
-                    .build();
+        RetrieveContextResponse response = retrievalClient.retrieveContext(request.initialQuery());
 
-            RetrieveContextResponse response = retrievalStub.retrieveContext(contextRequest);
+        ChatSession session = chatService.createChatSession(userId, request.initialQuery(),
+                response.getPromptReadyContext());
 
-            ChatSession session = chatService.createChatSession(userId, request.initialQuery(),
-                    response.getPromptReadyContext());
+        return ResponseEntity.ok(session.getId().toString());
+    }
 
-            return ResponseEntity.ok(session.getId().toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Failed to create chat session: " + e.getMessage());
-        }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
+        String message = ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred";
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", message));
     }
 
 }
