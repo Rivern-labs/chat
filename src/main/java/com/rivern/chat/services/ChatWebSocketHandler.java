@@ -2,7 +2,6 @@ package com.rivern.chat.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rivern.chat.dto.ChatRequest;
-import com.rivern.chat.repositories.ChatSessionRepository;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -15,8 +14,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper mapper;
     private final ChatService chatService;
 
-    public ChatWebSocketHandler(ObjectMapper mapper, ChatService service,
-            ChatSessionRepository chatSessionRepoistory) {
+    public ChatWebSocketHandler(ObjectMapper mapper, ChatService service) {
         this.mapper = mapper;
         this.chatService = service;
 
