@@ -2,7 +2,6 @@ package com.rivern.chat.services;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.rivern.chat.entity.ChatSession;
@@ -10,6 +9,7 @@ import com.rivern.chat.entity.ChatSession.ChatMessage;
 import com.rivern.chat.grpc.RetrievalClient;
 import com.rivern.chat.grpc.RetrieveContextResponse;
 import com.rivern.chat.repositories.ChatSessionRepository;
+import com.rivern.chat.utlis.SystemPrompts;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,28 +36,69 @@ public class ChatService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
-    public Flux<String> getStreamingResponse(String userMessage, String chatSessionId) {
-        Optional<ChatSession> session = chatSessionRepository.findById(chatSessionId);
-        if (session.isEmpty()) {
-            throw new IllegalArgumentException("Invalid chat session ID");
+    public ChatSession getChatSession(String chatSessionId) {
+        return chatSessionRepository.findById(chatSessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid chat session ID"));
+    }
+
+    public Flux<String> getInitialResponse(String chatSessionId) {
+        ChatSession chatSession = chatSessionRepository.findById(chatSessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid chat session ID"));
+
+        List<ChatSession.ChatMessage> updatedMessages = new ArrayList<>();
+        if (chatSession.getMessages() != null) {
+            updatedMessages.addAll(chatSession.getMessages());
         }
 
-        ChatSession chatSession = session.get();
+        List<Message> messages = buildTranscriptFromTurns(chatSession);
+        return chatClientService.getStreamingResponse(messages);
+    }
+
+    public Flux<String> getStreamingResponse(String userMessage, String chatSessionId) {
+        ChatSession chatSession = chatSessionRepository.findById(chatSessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid chat session ID"));
+
+        List<ChatSession.ChatMessage> updatedMessages = new ArrayList<>();
+        if (chatSession.getMessages() != null) {
+            updatedMessages.addAll(chatSession.getMessages());
+        }
+
+        updatedMessages.add(new ChatSession.ChatMessage(ChatSession.Sender.USER, userMessage));
+        chatSession.setMessages(updatedMessages);
+        chatSessionRepository.save(chatSession);
 
         List<Message> messages = buildTranscriptFromTurns(chatSession);
-
         return chatClientService.getStreamingResponse(messages);
+    }
 
+    public void appendAssistantMessage(String chatSessionId, String assistantMessage) {
+        ChatSession chatSession = chatSessionRepository.findById(chatSessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid chat session ID"));
+
+        List<ChatSession.ChatMessage> updatedMessages = new ArrayList<>();
+        if (chatSession.getMessages() != null) {
+            updatedMessages.addAll(chatSession.getMessages());
+        }
+
+        updatedMessages.add(new ChatSession.ChatMessage(ChatSession.Sender.ASSISTANT, assistantMessage));
+        chatSession.setMessages(updatedMessages);
+        chatSessionRepository.save(chatSession);
     }
 
     public ChatSession createChatSession(String userId, String initialQuery) {
         RetrieveContextResponse response = retrievalClient.retrieveContext(initialQuery);
-        logger.info("Retrieved context for query '{}': {}", initialQuery, response.getPromptReadyContext());
+        logger.info("Retrieved context for query '{}'", initialQuery);
 
-        List<ChatSession.ChatMessage> messages = List.of(new ChatMessage(ChatSession.Sender.USER, initialQuery));
+        String systemPrompt = SystemPrompts.getSessionSummaryPrompt(response.getPromptReadyContext());
+        List<ChatSession.ChatMessage> messages = List.of(
+                new ChatMessage(ChatSession.Sender.USER, initialQuery),
+                new ChatMessage(ChatSession.Sender.SYSTEM, systemPrompt));
+
         String sessionId = UUID.randomUUID().toString();
         ChatSession chatSession = new ChatSession(sessionId, userId, messages);
-        return chatSessionRepository.save(chatSession);
+        ChatSession session = chatSessionRepository.save(chatSession);
+
+        return session;
     }
 
     private List<Message> buildTranscriptFromTurns(ChatSession chatSession) {
