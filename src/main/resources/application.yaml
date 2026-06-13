@@ -4,10 +4,10 @@ spring:
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
-      base-url: https://api.groq.com/openai/v1
+      base-url: https://openrouter.ai/api/v1
       chat:
         options:
-          model: openai/gpt-oss-20b
+          model: openai/gpt-oss-120b
           temperature: 0.2
   mongodb:
     uri: ${MONGO_CONNECTION_URI}
@@ -21,3 +21,9 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
