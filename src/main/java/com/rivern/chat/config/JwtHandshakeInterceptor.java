@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.stereotype.Component;
@@ -17,6 +20,8 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
     private final JwtDecoder jwtDecoder;
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtHandshakeInterceptor.class);
+
     public JwtHandshakeInterceptor(JwtDecoder jwtDecoder) {
         this.jwtDecoder = jwtDecoder;
     }
@@ -26,6 +31,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             Map<String, Object> attributes) throws Exception {
         String query = request.getURI().getQuery();
         if (query == null || query.isBlank()) {
+            logger.warn("No query parameters found in the request URI.");
             return false;
         }
 
@@ -35,6 +41,8 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 .findFirst()
                 .orElse(null);
 
+        logger.info("Extracted token: {}", token);
+
         if (token == null) {
             return false;
         }
@@ -43,9 +51,12 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             Jwt jwt = jwtDecoder.decode(token);
             attributes.put("userId", jwt.getSubject());
         } catch (Exception e) {
-            response.setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
+            e.printStackTrace();
+            response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return false;
         }
+
+        logger.info("WebSocket handshake authorized for userId: {}", attributes.get("userId"));
 
         return true;
     }
