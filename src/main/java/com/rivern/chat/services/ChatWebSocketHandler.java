@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rivern.chat.dto.ChatRequest;
 import com.rivern.chat.entity.ChatSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -16,6 +18,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper mapper;
     private final ChatService chatService;
+
+    private static final Logger logger = LoggerFactory.getLogger(ChatWebSocketHandler.class);
 
     public ChatWebSocketHandler(ObjectMapper mapper, ChatService service) {
         this.mapper = mapper;
@@ -64,13 +68,18 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         String query = session.getUri().getQuery();
 
+        logger.info("WebSocket connection established");
+
         String sessionId = Arrays.stream(query.split("&")).filter(p -> p.startsWith("sessionId="))
                 .map(p -> p.substring("sessionId=".length()))
                 .findFirst()
                 .orElseThrow();
 
+        logger.info("Extracted sessionId: {}", sessionId);
         ChatSession chatSession = chatService.getChatSession(sessionId);
+        logger.info("Chat session retrieved: {}", chatSession);
         if (chatSession.getMessages().size() == 2) {
+            logger.info("Sending initial response for sessionId: {}", sessionId);
             StringBuilder assistantReply = new StringBuilder();
             chatService.getInitialResponse(sessionId).doOnNext(token -> {
                 assistantReply.append(token);
@@ -95,6 +104,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     () -> chatService.appendAssistantMessage(sessionId, assistantReply.toString()))
                     .subscribe();
         }
+        // logger.info("Session did not ")
     }
 
 }
