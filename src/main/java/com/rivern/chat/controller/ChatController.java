@@ -1,8 +1,10 @@
 package com.rivern.chat.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import com.rivern.chat.dto.NewChatSessionRequest;
+import com.rivern.chat.dto.UsersChatResponse;
 import com.rivern.chat.entity.ChatSession;
 import com.rivern.chat.services.ChatService;
 
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +39,17 @@ public class ChatController {
         ChatSession session = chatService.createChatSession(userId, request.initialQuery());
 
         return ResponseEntity.ok(session.getId().toString());
+    }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<List<UsersChatResponse>> getUsersChatSessions(@AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        List<ChatSession> sessions = chatService.getUserChatSessions(userId);
+
+        List<UsersChatResponse> response = sessions.stream()
+                .map(session -> new UsersChatResponse(session.getId(), session.getInitialQuery()))
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
