@@ -30,6 +30,8 @@ public class ChatSession {
 
     private List<ChatMessage> messages;
 
+    private String initialQuery;
+
     @Getter
     @Setter
     @NoArgsConstructor
@@ -45,9 +47,10 @@ public class ChatSession {
         SYSTEM,
     };
 
-    public ChatSession(String id, String userId, List<ChatMessage> messages) {
+    public ChatSession(String id, String userId, List<ChatMessage> messages, String initialQuery) {
         this.id = id;
         this.userId = userId;
         this.messages = messages;
+        this.initialQuery = initialQuery;
     }
 }
