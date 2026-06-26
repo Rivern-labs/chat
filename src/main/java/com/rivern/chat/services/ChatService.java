@@ -95,10 +95,15 @@ public class ChatService {
                 new ChatMessage(ChatSession.Sender.SYSTEM, systemPrompt));
 
         String sessionId = UUID.randomUUID().toString();
-        ChatSession chatSession = new ChatSession(sessionId, userId, messages);
+        ChatSession chatSession = new ChatSession(sessionId, userId, messages, initialQuery);
         ChatSession session = chatSessionRepository.save(chatSession);
 
         return session;
+    }
+
+    public List<ChatSession> getUserChatSessions(String userId) {
+        return chatSessionRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("No chat sessions found for user ID: " + userId));
     }
 
     private List<Message> buildTranscriptFromTurns(ChatSession chatSession) {
