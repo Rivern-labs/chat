@@ -4,7 +4,7 @@ spring:
   ai:
     openai:
       api-key: ${OPENAI_API_KEY}
-      base-url: https://openrouter.ai/api/v1
+      base-url: ${OPENAI_BASE_URL}
       chat:
         options:
           model: openai/gpt-oss-120b
