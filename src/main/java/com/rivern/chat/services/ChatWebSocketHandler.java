@@ -38,6 +38,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 .findFirst()
                 .orElseThrow();
 
+        logger.info("Received message: '{}' for sessionId: '{}'", request.message(), sessionId);
+
         String userMessage = request.message();
         chatService.getStreamingResponse(userMessage, sessionId).doOnNext(token -> {
             assistantReply.append(token);
