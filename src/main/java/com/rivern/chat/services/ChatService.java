@@ -88,6 +88,8 @@ public class ChatService {
     public ChatSession createChatSession(String userId, String initialQuery) {
         RetrieveContextResponse response = retrievalClient.retrieveContext(initialQuery);
         logger.info("Retrieved context for query '{}'", initialQuery);
+        logger.info(response.getAllFields().toString());
+        logger.info("Retrieved prompt ready context: '{}'", response.getPromptReadyContext());
 
         String systemPrompt = SystemPrompts.getSessionSummaryPrompt(response.getPromptReadyContext());
         List<ChatSession.ChatMessage> messages = List.of(
